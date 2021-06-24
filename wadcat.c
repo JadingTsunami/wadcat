@@ -358,7 +358,6 @@ void processDirectory(int numlumps, wadtarget_t target, char* maptarget)
 int main(int argc, char** argv)
 {
     int c;
-    char* filename = NULL;
     wadtarget_t target = TARGET_LUMPS;
 
     opterr = 0;
@@ -407,7 +406,7 @@ int main(int argc, char** argv)
     }
 
     if( argc == optind ) {
-        printf("Usage: %s [options] <file.wad>\n",argv[0]);
+        printf("Usage: %s [options] [file.wad ...]\n",argv[0]);
         printf("\n");
         printf("Options:\n");
         printf("\t-m: Maps only\n");
@@ -429,15 +428,23 @@ int main(int argc, char** argv)
         return -1;
     }
 
-    f = fopen( argv[optind], "rb" );
-    if(!ferror(f)) {
-        bool iwad;
-        int nl, dir;
-        parseHeader(&iwad,&nl,&dir);
-        if( !short_print )
-            printf( "%s | Lumps: %d | Diroffs: %08x\n", (iwad?"IWAD":"PWAD"),nl,dir);
-        fseek(f,dir,0);
-        processDirectory(nl, target, NULL);
+    bool multiple_files = ((argc - optind) > 1);
+    while(optind < argc) {
+        if(multiple_files) {
+            printf("File: %s\n",argv[optind]);
+        }
+        f = fopen( argv[optind++], "rb" );
+        if(f && !ferror(f)) {
+            bool iwad;
+            int nl, dir;
+            parseHeader(&iwad,&nl,&dir);
+            if( !short_print )
+                printf( "%s | Lumps: %d | Diroffs: %08x\n", (iwad?"IWAD":"PWAD"),nl,dir);
+            fseek(f,dir,0);
+            processDirectory(nl, target, NULL);
+            fclose(f);
+        } else {
+            printf("Error opening %s\n",argv[optind-1]);
+        }
     }
-    fclose(f);
 }
