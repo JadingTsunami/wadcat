@@ -430,7 +430,7 @@ int main(int argc, char** argv)
 
     bool multiple_files = ((argc - optind) > 1);
     while(optind < argc) {
-        if(multiple_files) {
+        if(multiple_files && !short_print) {
             printf("File: %s\n",argv[optind]);
         }
         f = fopen( argv[optind++], "rb" );
