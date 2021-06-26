@@ -358,11 +358,12 @@ void processDirectory(int numlumps, wadtarget_t target, char* maptarget)
 int main(int argc, char** argv)
 {
     int c;
+    bool help = false;
     wadtarget_t target = TARGET_LUMPS;
 
     opterr = 0;
 
-    while ((c = getopt (argc, argv, "ltM:mSsqvn:")) != -1) {
+    while ((c = getopt (argc, argv, "hltM:mSsqvn:")) != -1) {
         switch (c) {
             case 'm':
                 target = TARGET_MAPS_ONLY;
@@ -393,6 +394,9 @@ int main(int argc, char** argv)
             case 'q':
                 short_print = true;
                 break;
+            case 'h':
+                help = true;
+                break;
             case '?':
                 if (optopt == 'n' || optopt == 'M') {
                     fprintf(stderr, "Option -%c requires an argument.\n", optopt);
@@ -405,7 +409,7 @@ int main(int argc, char** argv)
         }
     }
 
-    if( argc == optind ) {
+    if( argc == optind || help ) {
         printf("Usage: %s [options] [file.wad ...]\n",argv[0]);
         printf("\n");
         printf("Options:\n");
@@ -413,12 +417,14 @@ int main(int argc, char** argv)
         printf("\t\tPrint only map names present in WAD.\n");
         printf("\t-q: Short print\n");
         printf("\t\tPrint only lump names.\n");
-        printf("\t-n<c>: Line separator (default: newline)\n");
+        printf("\t-n[c]: Line separator (default: newline)\n");
         printf("\t\tSeparate lump prints by supplied line separator.\n");
         printf("\t\tUseful for computer-readable or batch processing.\n");
-        printf("\t-M<MAPNAME>: Select a specific map to print.");
+        printf("\t-M[MAPNAME]: Select a specific map to print.");
         printf("\t\tPrint only contents from map with header matching MAPNAME.\n");
         printf("\t\tUse 'x' as a substitute for a number (e.g., MAPxx)\n");
+        printf("\t-h: Help\n");
+        printf("\t\tPrint this help screen.\n");
         printf("Map decoding options:\n");
         printf("\t-S: Decode and print only SECTORS lump(s)\n");
         printf("\t-t: Decode and print only THINGS lump(s)\n");
