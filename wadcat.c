@@ -23,10 +23,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <string.h>
 #include <assert.h>
 #include <unistd.h>
+#include <string.h>
+#include <ctype.h>
 
 FILE* f;
 bool short_print = false;
 char line_sep = '\n';
+char* target_lump = NULL;
 char* target_map = NULL;
 typedef enum {
     TARGET_LUMPS,
@@ -53,6 +56,15 @@ void parseHeader(bool* iwad, int* numlumps, int* diroff)
     fread(diroff,1,4,f);
 }
 
+char* str_upper(char* s)
+{
+    char* begin = s;
+    while (s && *s) {
+        *s = toupper(*s);
+        s++;
+    }
+    return begin;
+}
 
 bool checkPattern(char* lump, char* pattern)
 {
@@ -280,13 +292,30 @@ void printLump(int pos, int bsize, char* lumpname, bool print_header)
     }
 }
 
+void printLumpRaw(int pos, int bsize, char* lumpname, bool print_header)
+{
+    uint8_t* lumpdata = (uint8_t*) malloc(sizeof(uint8_t)*bsize);
+    assert(lumpdata);
+    getLump(pos, bsize, lumpdata);
+    int bcnt = 0;
+    while (bcnt < bsize) {
+        printf("%c", *lumpdata++);
+        bcnt++;
+    }
+}
+
 void processLump(wadtarget_t target, int pos, int bsize, char* lumpname)
 {
     static bool first = true;
     switch (target) {
         case TARGET_LUMPS:
-            printLump(pos, bsize, lumpname, first);
-            first = false;
+            if (!target_lump) {
+                printLump(pos, bsize, lumpname, first);
+                first = false;
+            } else if (target_lump && checkPattern(lumpname, target_lump)) {
+                printLumpRaw(pos, bsize, lumpname, first);
+                first = false;
+            }
             break;
         case TARGET_MAPS_ONLY:
             if(isExMx(lumpname)||isMAPxx(lumpname)) {
@@ -363,14 +392,19 @@ int main(int argc, char** argv)
 
     opterr = 0;
 
-    while ((c = getopt (argc, argv, "hltM:mSsqvn:")) != -1) {
+    while ((c = getopt (argc, argv, "hltM:mSsqvn:x:")) != -1) {
         switch (c) {
+            case 'x':
+                short_print = true;
+                target = TARGET_LUMPS;
+                free(target_lump);
+                target_lump = str_upper(strdup(optarg));
+                break;
             case 'm':
                 target = TARGET_MAPS_ONLY;
                 break;
             case 'M':
-                if(target_map)
-                    free(target_map);
+                free(target_map);
                 target_map = strdup(optarg);
                 break;
             case 'S':
@@ -423,6 +457,8 @@ int main(int argc, char** argv)
         printf("\t-M[MAPNAME]: Select a specific map to print.");
         printf("\t\tPrint only contents from map with header matching MAPNAME.\n");
         printf("\t\tUse 'x' as a substitute for a number (e.g., MAPxx)\n");
+        printf("\t-x[LUMPNAME]: Raw print contents of all lumps named LUMPNAME.\n");
+        printf("\t\tAlso auto-enables short print mode (-q).\n");
         printf("\t-h: Help\n");
         printf("\t\tPrint this help screen.\n");
         printf("Map decoding options:\n");
