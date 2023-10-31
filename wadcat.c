@@ -370,16 +370,16 @@ void processDirectory(int numlumps, wadtarget_t target, char* maptarget)
         fread(lumpname,1,8,f);
         lumpname[8]='\0';
 
-        if (in_target_map) {
-            processLump(target, pos, bsize, lumpname);
-        }
-
-        if(target_map) {
-            if(checkPattern(lumpname, target_map)) {
+        if (target_map) {
+            if (checkPattern(lumpname, target_map)) {
                 in_target_map = true;
-            } else if((isExMx(lumpname) || isMAPxx(lumpname)) || !isMapLump(lumpname)) {
+            } else if ((isExMx(lumpname) || isMAPxx(lumpname)) || !isMapLump(lumpname)) {
                 in_target_map = false;
             }
+        }
+
+        if (in_target_map) {
+            processLump(target, pos, bsize, lumpname);
         }
     }
 }
